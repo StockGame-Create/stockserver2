@@ -7,7 +7,7 @@
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>주식 시뮬레이터 뽑기 시스템</title>
+  <title>주식 시뮬레이터 +뽑기</title>
   <style>
 /* 베이스 스타일 */
 body {
@@ -529,7 +529,7 @@ button:disabled {
       </div>
     </div>
 
-    <div id="eventBox">게임을 시작해보세요! 1분마다 뽑기권을 받을 수 있습니다.</div>
+    <div id="eventBox">게임을 시작해보세요! 20초마다 뽑기권을 받을 수 있습니다.</div>
   </div>
 
   <hr id="outerHr" style="display: none;">
@@ -618,7 +618,7 @@ const specialInfo = {
 let capital = 100000;
 let inventory = [];
 let activeStocks = [];
-let freeTickets = 100; // 시작시 1개 지급
+let freeTickets = 1; // 시작시 1개 지급
 let ticketTimerSeconds = 60; // 1분 뽑기권 타이머
 
 const MAX_INVENTORY_SIZE = 9;
@@ -1026,7 +1026,7 @@ function updateTimer() {
 function updateTicketTimer() {
   ticketTimerSeconds--;
   if (ticketTimerSeconds <= 0) {
-    ticketTimerSeconds = 60;
+    ticketTimerSeconds = 20;
     freeTickets++;
     showFreeTicketNotification();
     updateFreeTickets();
@@ -1169,4 +1169,5 @@ toggleBtn.addEventListener("click", () => {
 
   </script>
 </body>
+
 </html>
