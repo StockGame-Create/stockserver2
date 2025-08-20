@@ -4,10 +4,11 @@
   <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>주식 시뮬레이터 +뽑기</title>
+  <title>주식 시뮬레이터 뽑기 시스템</title>
   <style>
 /* 베이스 스타일 */
 body {
@@ -36,6 +37,90 @@ body {
 #app:hover {
   transform: scale(1.002);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+}
+
+/* 로그인 화면 스타일 */
+.login-container {
+  text-align: center;
+  padding: 50px 20px;
+}
+
+.login-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #0052D4, #6FB1FC);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.google-login-btn {
+  background: #4285f4;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.google-login-btn:hover {
+  background: #3367d6;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+}
+
+/* 사용자 정보 표시 */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #4364F7;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.logout-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #c82333;
 }
 
 h1 {
@@ -129,6 +214,26 @@ h1 {
   padding: 8px 16px;
   border-radius: 12px;
   border: 2px solid #28a745;
+}
+
+/* 거래 버튼 */
+.trade-btn {
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.trade-btn:hover {
+  background: linear-gradient(45deg, #f7931e, #ff6b35);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
 .sections-container {
@@ -384,6 +489,191 @@ button:disabled {
   z-index: 999;
 }
 
+/* 거래 관련 스타일 */
+.trade-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.trade-modal {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  animation: tradeModalIn 0.3s ease;
+}
+
+@keyframes tradeModalIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.online-users-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.user-card {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-card:hover {
+  border-color: #4364F7;
+  background: #e3f2fd;
+  transform: translateY(-2px);
+}
+
+.user-card img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  border: 2px solid #4364F7;
+}
+
+/* 거래 인터페이스 */
+.trade-interface {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.trade-side {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  min-height: 400px;
+}
+
+.trade-side h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.trade-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.trade-item {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.trade-item:hover {
+  border-color: #4364F7;
+  transform: scale(1.05);
+}
+
+.trade-item.selected {
+  border-color: #28a745;
+  background: #d4edda;
+}
+
+.trade-offer {
+  border: 2px dashed #ccc;
+  min-height: 100px;
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 10px;
+  background: white;
+}
+
+.trade-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.trade-status {
+  text-align: center;
+  padding: 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.trade-status.waiting {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.trade-status.ready {
+  background: #d4edda;
+  color: #155724;
+}
+
+.trade-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.accept-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.accept-btn:hover {
+  background: #218838;
+}
+
+.decline-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.decline-btn:hover {
+  background: #c82333;
+}
+
 .free-ticket-notification {
   position: fixed;
   top: 20px;
@@ -407,6 +697,22 @@ button:disabled {
   to { opacity: 0; transform: translateX(100%); }
 }
 
+/* 거래 요청 알림 */
+.trade-request-notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+  z-index: 1002;
+  animation: slideInNotification 0.5s ease;
+  font-weight: 700;
+  max-width: 300px;
+}
+
 /* 등급별 배경 색상 */
 .rarity-common { background: linear-gradient(135deg, #f8f9fa, #e9ecef); }
 .rarity-rare { background: linear-gradient(135deg, #cce5ff, #b3d9ff); }
@@ -414,23 +720,12 @@ button:disabled {
 .rarity-extremely-rare { background: linear-gradient(135deg, #fff3cd, #ffeaa7); }
 .rarity-amazing { 
   background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-
 }
 .rarity-legendary { 
   background: linear-gradient(135deg, #e2e3ff, #d1ecf1);
-
 }
 .rarity-very-legendary { 
   background: linear-gradient(135deg, #ffe4e1, #ffcccb);
-
-}
-
-/* 특별한 이펙트 */
-
-
-@keyframes sparkle {
-  0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.5; }
-  50% { transform: rotate(180deg) scale(1.1); opacity: 0.8; }
 }
 
 .special-giant { color: #ff6b35; font-weight: 900; }
@@ -466,87 +761,116 @@ button:disabled {
 .special-giant .special-badge { background: #ff6b35; color: white; }
 .special-tiny .special-badge { background: #74b9ff; color: white; }
 .special-always-up .special-badge { background: #00b894; color: white; }
+
+.modal-close {
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.modal-close:hover {
+  color: #999;
+}
   </style>
 </head>
 <body>
-  <div id="app">
-    <h1>주식 시뮬레이터 뽑기 시스템 (Made By 범서) Ver 3.01A</h1>
-    <div id="timer">
-      <div>다음 주가 갱신까지: <span id="timerSeconds">10</span>초</div>
-      <div>다음 뽑기권 지급까지: <span id="ticketTimer">60</span>초</div>
+  <!-- 로그인 화면 -->
+  <div id="loginScreen" class="login-container">
+    <div id="app">
+      <div class="login-title">주식 시뮬레이터 뽑기 시스템</div>
+      <div class="login-subtitle">거래 테스트중(작동X)</div>
+      <button class="google-login-btn" onclick="signInWithGoogle()">
+        <span>🔍</span>
+        Google 계정으로 시작하기
+      </button>
     </div>
-    
-    <div class="main-controls">
-      <div class="capital-display">
-        현재 자본금: <span id="capital">100,000</span> 원
-      </div>
-      <div class="ticket-display">
-         뽑기권: <span id="freeTickets">1</span>개
-      </div>
-      <button id="toggleRankingBtn">🏆 랭킹 보이기/숨기기</button>
-    </div>
-
-    <div class="gacha-container">
-      <button id="gachaBtn">뽑기 (뽑기권 1개 사용)</button>
-    </div>
-
-    <div class="sections-container">
-      <div class="active-stocks">
-        <div class="section-title">-활성 주식-</div>
-        <table id="activeStocksTable" style="display: none;">
-          <thead>
-            <tr>
-              <th>주식명</th>
-              <th>분야</th>
-              <th>현재가</th>
-              <th>변동률(%)</th>
-              <th>변동액</th>
-              <th>남은 변동</th>
-              <th>차트</th>
-            </tr>
-          </thead>
-          <tbody id="activeStockTableBody"></tbody>
-        </table>
-        <div id="noActiveStocks" style="text-align: center; color: #666; padding: 40px;">
-          활성화된 주식이 없습니다.<br>
-          인벤토리에서 주식을 사용해보세요!
-        </div>
-      </div>
-
-      <div class="inventory">
-        <div class="inventory-header">
-          <div class="section-title" style="margin: 0;">인벤토리</div>
-          <div class="inventory-count">
-            <span id="inventoryCount">0</span> / 9
-          </div>
-        </div>
-        <div id="inventoryContainer">
-          <div style="text-align: center; color: #666; padding: 40px;">
-            인벤토리가 비어있습니다.<br>
-            뽑기를 해보세요!
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="eventBox">게임을 시작해보세요! 20초마다 뽑기권을 받을 수 있습니다.</div>
   </div>
 
-  <hr id="outerHr" style="display: none;">
+  <!-- 메인 게임 화면 -->
+  <div id="gameScreen" style="display: none;">
+    <div id="app">
+      <!-- 사용자 정보 -->
+      <div class="user-info">
+        <img id="userAvatar" class="user-avatar" src="" alt="사용자 아바타">
+        <span id="userName" class="user-name"></span>
+        <button class="logout-btn" onclick="signOut()">로그아웃</button>
+      </div>
 
-  <div id="rankingContainer" style="margin-top:30px; text-align: left;">
-    <hr>
-    <div>
-      <input
-        type="text"
-        id="username"
-        placeholder="이름 입력"
-        style="padding:6px 12px; border-radius:6px; border:1px solid #ccc; font-size:1rem;" />
-      <button
-        onclick="saveRanking()"
-        style="padding:6px 16px; font-size:1rem; margin-left:10px;">🏅 랭킹 등록</button>
+      <h1>주식 시뮬레이터 뽑기 시스템 (Made By 범서) Ver 4.0 - Trading Edition</h1>
+      
+      <div id="timer">
+        <div>다음 주가 갱신까지: <span id="timerSeconds">10</span>초</div>
+        <div>다음 뽑기권 지급까지: <span id="ticketTimer">60</span>초</div>
+      </div>
+      
+      <div class="main-controls">
+        <div class="capital-display">
+          현재 자본금: <span id="capital">100,000</span> 원
+        </div>
+        <div class="ticket-display">
+           뽑기권(최대7장): <span id="freeTickets">1</span>개
+        </div>
+        <button class="trade-btn" onclick="openTradeModal()">거래하기 테스트중</button>
+        <button id="toggleRankingBtn">🏆 랭킹 보이기/숨기기</button>
+      </div>
+
+      <div class="gacha-container">
+        <button id="gachaBtn">뽑기 (뽑기권 1개 사용)</button>
+      </div>
+
+      <div class="sections-container">
+        <div class="active-stocks">
+          <div class="section-title">-활성 주식-</div>
+          <table id="activeStocksTable" style="display: none;">
+            <thead>
+              <tr>
+                <th>주식명</th>
+                <th>분야</th>
+                <th>현재가</th>
+                <th>변동률(%)</th>
+                <th>변동액</th>
+                <th>남은 변동</th>
+                <th>차트</th>
+              </tr>
+            </thead>
+            <tbody id="activeStockTableBody"></tbody>
+          </table>
+          <div id="noActiveStocks" style="text-align: center; color: #666; padding: 40px;">
+            활성화된 주식이 없습니다.<br>
+            인벤토리에서 주식을 사용해보세요!
+          </div>
+        </div>
+
+        <div class="inventory">
+          <div class="inventory-header">
+            <div class="section-title" style="margin: 0;">인벤토리</div>
+            <div class="inventory-count">
+              <span id="inventoryCount">0</span> / 9
+            </div>
+          </div>
+          <div id="inventoryContainer">
+            <div style="text-align: center; color: #666; padding: 40px;">
+              인벤토리가 비어있습니다.<br>
+              뽑기를 해보세요!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="eventBox">게임을 시작해보세요! 20초마다 뽑기권을 받을 수 있습니다.</div>
     </div>
-    <div id="ranking" style="max-width: 500px; margin-top: 15px;"></div>
+
+    <hr id="outerHr" style="display: none;">
+
+    <div id="rankingContainer" style="margin-top:30px; text-align: left;">
+      <hr>
+      <div id="ranking" style="max-width: 500px; margin-top: 15px;"></div>
+    </div>
   </div>
 
   <script>
@@ -562,6 +886,687 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
+
+// 전역 변수
+let currentUser = null;
+let capital = 100000;
+let inventory = [];
+let activeStocks = [];
+let freeTickets = 2;
+let ticketTimerSeconds = 20;
+let onlineUsers = {};
+let currentTradeRequest = null;
+let currentTrade = null;
+
+// Google 로그인 설정
+const provider = new firebase.auth.GoogleAuthProvider();
+
+// 인증 상태 변경 감지
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('gameScreen').style.display = 'block';
+    
+    // 사용자 정보 표시
+    document.getElementById('userName').textContent = user.displayName;
+    document.getElementById('userAvatar').src = user.photoURL;
+    
+    // 사용자 데이터 로드
+    loadUserData();
+    // 온라인 상태 설정
+    setUserOnline();
+    // 온라인 사용자 목록 감지
+    watchOnlineUsers();
+    // 거래 요청 감지
+    watchTradeRequests();
+    
+    
+    // 게임 로직 시작
+    initializeGame();
+  } else {
+    currentUser = null;
+    document.getElementById('loginScreen').style.display = 'block';
+    document.getElementById('gameScreen').style.display = 'none';
+  }
+});
+
+// Google 로그인
+function signInWithGoogle() {
+  auth.signInWithPopup(provider).catch((error) => {
+    console.error('로그인 오류:', error);
+    alert('로그인에 실패했습니다. 다시 시도해주세요.');
+  });
+}
+
+// 로그아웃
+function signOut() {
+  // 오프라인 상태로 변경
+  if (currentUser) {
+    db.ref(`onlineUsers/${currentUser.uid}`).remove();
+  }
+  
+  auth.signOut().catch((error) => {
+    console.error('로그아웃 오류:', error);
+  });
+}
+
+// 사용자 데이터 로드
+function loadUserData() {
+  const userRef = db.ref(`users/${currentUser.uid}`);
+  userRef.once('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      capital = data.capital || 100000;
+      inventory = data.inventory || [];
+      freeTickets = data.freeTickets || 1;
+      activeStocks = data.activeStocks || [];
+      
+      updateUI();
+    }
+  });
+}
+
+// 사용자 데이터 저장
+function saveUserData() {
+  if (!currentUser) return;
+  
+  const userRef = db.ref(`users/${currentUser.uid}`);
+  userRef.set({
+    name: currentUser.displayName,
+    photoURL: currentUser.photoURL,
+    capital: capital,
+    inventory: inventory,
+    freeTickets: freeTickets,
+    activeStocks: activeStocks,
+    lastSaved: Date.now()
+  });
+}
+
+// 온라인 상태 설정
+function setUserOnline() {
+  const userOnlineRef = db.ref(`onlineUsers/${currentUser.uid}`);
+  const userInfo = {
+    name: currentUser.displayName,
+    photoURL: currentUser.photoURL,
+    lastSeen: Date.now()
+  };
+  
+  userOnlineRef.set(userInfo);
+  
+  // 연결이 끊어졌을 때 자동으로 제거
+  userOnlineRef.onDisconnect().remove();
+  
+  // 주기적으로 업데이트
+  setInterval(() => {
+    if (currentUser) {
+      userOnlineRef.update({ lastSeen: Date.now() });
+    }
+  }, 30000); // 30초마다
+}
+
+// 온라인 사용자 목록 감지
+function watchOnlineUsers() {
+  db.ref('onlineUsers').on('value', (snapshot) => {
+    onlineUsers = snapshot.val() || {};
+    
+    // 5분 이상 비활성인 사용자 제거
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    for (const [uid, user] of Object.entries(onlineUsers)) {
+      if (user.lastSeen < fiveMinutesAgo) {
+        db.ref(`onlineUsers/${uid}`).remove();
+      }
+    }
+  });
+}
+
+function watchOtherInventory(otherUserId) {
+  const otherInventoryRef = db.ref(`users/${otherUserId}/inventory`);
+  otherInventoryRef.on('value', snapshot => {
+    const otherInventory = snapshot.val() || [];
+    const container = document.getElementById('otherInventory');
+    if (container) {
+      container.innerHTML = getTradeInventoryHTML(otherInventory, true);
+    }
+  });
+}
+
+// 거래 요청 감지
+function watchTradeRequests() {
+  const requestRef = db.ref(`tradeRequests/${currentUser.uid}`);
+  requestRef.on('child_added', (snapshot) => {
+    const request = snapshot.val();
+    showTradeRequestNotification(request, snapshot.key);
+  });
+}
+
+// 거래 모달 열기
+function openTradeModal() {
+  const modal = document.createElement('div');
+  modal.className = 'trade-overlay';
+  modal.innerHTML = `
+    <div class="trade-modal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>온라인 사용자</h2>
+        <span class="modal-close" onclick="closeTradeModal()">&times;</span>
+      </div>
+      <div class="online-users-list" id="onlineUsersList">
+        ${getOnlineUsersHTML()}
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+// 온라인 사용자 HTML 생성
+function getOnlineUsersHTML() {
+  const users = Object.entries(onlineUsers).filter(([uid, user]) => uid !== currentUser.uid);
+  
+  if (users.length === 0) {
+    return '<div style="grid-column: 1/-1; text-align: center; color: #666;">현재 온라인 사용자가 없습니다.</div>';
+  }
+  
+  return users.map(([uid, user]) => `
+    <div class="user-card" onclick="sendTradeRequest('${uid}')">
+      <img src="${user.photoURL}" alt="${user.name}">
+      <div>${user.name}</div>
+      <div style="font-size: 0.8rem; color: #666;">온라인</div>
+    </div>
+  `).join('');
+}
+
+// 거래 모달 닫기
+function closeTradeModal() {
+  document.querySelector('.trade-overlay')?.remove();
+}
+
+// 거래 요청 보내기
+// 거래 요청 보내기
+// 거래 요청 보내기
+function sendTradeRequest(targetUserId) {
+  const tradeRequest = {
+    from: currentUser.uid,
+    fromName: currentUser.displayName,
+    fromPhoto: currentUser.photoURL,
+    timestamp: Date.now()
+  };
+  
+  db.ref(`tradeRequests/${targetUserId}/${currentUser.uid}`).set(tradeRequest);
+  
+  closeTradeModal();
+  alert('거래 요청을 보냈습니다!');
+}
+
+function selectTradeItem(itemId) {
+  const item = inventory.find(i => i.id == itemId);
+  if (!item || !currentTrade) return;
+
+  // 내 오퍼에 추가
+  const offerRef = db.ref(`trades/${currentTrade.id}/participants/${currentUser.uid}/offer`);
+  offerRef.child(itemId).set(item);
+
+  // UI 업데이트
+  const myOffer = document.getElementById('myOffer');
+  if (myOffer) {
+    const rarityName = rarityInfo[item.rarity].name;
+    const specialName = specialInfo[item.special].name;
+    const displayName = specialName ? `${specialName} ${rarityName}` : rarityName;
+
+    const offerElement = document.createElement('div');
+    offerElement.className = `trade-item ${rarityInfo[item.rarity].class}`;
+    offerElement.style.cssText = 'flex: 0 0 auto; width: 80px; height: 80px; font-size: 0.7rem;';
+    offerElement.innerHTML = `
+      <div style="font-weight: 600;">${displayName}</div>
+      <div>${item.name}</div>
+    `;
+    myOffer.appendChild(offerElement);
+  }
+}
+
+// 거래 요청 알림 표시
+function showTradeRequestNotification(request, requestId) {
+  const notification = document.createElement('div');
+  notification.className = 'trade-request-notification';
+  notification.innerHTML = `
+    <div>💼 거래 요청</div>
+    <div>${request.fromName}님이 거래를 요청했습니다</div>
+    <div style="margin-top: 10px;">
+      <button onclick="acceptTradeRequest('${request.from}', '${requestId}')" 
+              style="background: #28a745; margin-right: 10px;">수락</button>
+      <button onclick="declineTradeRequest('${requestId}')" 
+              style="background: #dc3545;">거절</button>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // 30초 후 자동 제거
+  setTimeout(() => {
+    notification.remove();
+  }, 30000);
+}
+
+// 거래 요청 수락
+function acceptTradeRequest(fromUserId, requestId) {
+  // 거래 세션 생성
+  const tradeId = `${currentUser.uid}_${fromUserId}_${Date.now()}`;
+  const tradeData = {
+    participants: {
+      [currentUser.uid]: {
+        name: currentUser.displayName,
+        photo: currentUser.photoURL,
+        offer: {},
+       
+      },
+      [fromUserId]: {
+        name: onlineUsers[fromUserId].name,
+        photo: onlineUsers[fromUserId].photoURL,
+        offer: {},
+        // 여기서 ready를 true로 설정
+      
+      }
+    },
+    status: 'active',
+    createdAt: Date.now()
+  };
+  
+  db.ref(`trades/${tradeId}`).set(tradeData).then(() => {
+    // 요청자에게 거래 시작 알림
+    db.ref(`tradeNotifications/${fromUserId}`).push({
+      type: 'trade_started',
+      tradeId: tradeId,
+      partnerName: currentUser.displayName,
+      timestamp: Date.now()
+    });
+    
+    // 거래 요청 제거
+    db.ref(`tradeRequests/${currentUser.uid}/${requestId}`).remove();
+    
+    // 수락자(현재 사용자)의 거래 인터페이스 열기
+    openTradeInterface(tradeId, fromUserId);
+    
+    // 알림 제거
+    document.querySelector('.trade-request-notification')?.remove();
+  });
+}
+
+// 거래 알림 감지 추가 (watchTradeRequests 함수에 추가)
+function watchTradeRequests() {
+  const requestRef = db.ref(`tradeRequests/${currentUser.uid}`);
+  requestRef.on('child_added', (snapshot) => {
+    const request = snapshot.val();
+    showTradeRequestNotification(request, snapshot.key);
+  });
+  
+  // 거래 시작 알림 감지 추가
+  const notificationRef = db.ref(`tradeNotifications/${currentUser.uid}`);
+  notificationRef.on('child_added', (snapshot) => {
+    const notification = snapshot.val();
+    if (notification.type === 'trade_started') {
+      // 알림 제거
+      snapshot.ref.remove();
+      
+      // 거래 UI 열기 (요청자용)
+      const otherUserId = Object.keys(onlineUsers).find(uid => 
+        onlineUsers[uid].name === notification.partnerName && uid !== currentUser.uid
+      );
+      
+      if (otherUserId) {
+        openTradeInterface(notification.tradeId, otherUserId);
+      }
+    }
+  });
+
+
+  // 상대방 준비 상태
+  const otherReadyStatus = document.getElementById('otherReadyStatus');
+  if (otherReadyStatus) {
+    if (otherData.ready) {
+      otherReadyStatus.textContent = '준비 완료!';
+      otherReadyStatus.style.background = '#d4edda';
+      otherReadyStatus.style.color = '#155724';
+    } else {
+      otherReadyStatus.textContent = '준비 대기 중';
+      otherReadyStatus.style.background = '#f8f9fa';
+      otherReadyStatus.style.color = '#666';
+    }
+  }
+
+  // 거래 실행 버튼
+  const executeBtn = document.getElementById('executeBtn');
+  const tradeStatus = document.getElementById('tradeStatus');
+  if (executeBtn && tradeStatus) {
+    const bothReady = myData.ready && otherData.ready;
+    executeBtn.disabled = !bothReady;
+
+    if (bothReady) {
+      tradeStatus.className = 'trade-status ready';
+      tradeStatus.textContent = '거래 준비 완료! 거래를 실행하세요.';
+    } else {
+      tradeStatus.className = 'trade-status waiting';
+      if (!myData.ready && !otherData.ready) {
+        tradeStatus.textContent = '양쪽 모두 준비가 필요합니다.';
+      } else if (!myData.ready) {
+        tradeStatus.textContent = '당신의 준비가 필요합니다.';
+      } else {
+        tradeStatus.textContent = '상대방을 기다리는 중...';
+      }
+    }
+  }
+}
+
+
+
+
+
+
+// 거래 인터페이스 열기 (개선된 버전)
+function openTradeInterface(tradeId, otherUserId) {
+  currentTrade = { id: tradeId, otherUser: otherUserId };
+  
+  // 기존 거래 인터페이스가 열려있으면 닫기
+  closeTradeInterface();
+  
+  const modal = document.createElement('div');
+  modal.className = 'trade-overlay';
+  modal.innerHTML = `
+    <div class="trade-modal" style="max-width: 1200px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>거래</h2>
+        <span class="modal-close" onclick="closeTradeInterface()">&times;</span>
+      </div>
+      
+      <div class="trade-interface">
+        <!-- 내 쪽 -->
+        <div class="trade-side">
+          <h3>${currentUser.displayName} (나)</h3>
+          <div style="margin-bottom: 15px;">내 인벤토리:</div>
+          <div class="trade-items" id="myInventory">
+            ${getTradeInventoryHTML(inventory)}
+          </div>
+          <div style="margin-bottom: 10px;">내 제안:</div>
+          <div class="trade-offer" id="myOffer"></div>
+          <button onclick="toggleReady()" id="myReadyBtn" style="width: 100%; margin-top: 10px;">
+            준비 완료
+          </button>
+        </div>
+        
+        <!-- 중앙 컨트롤 -->
+        <div class="trade-controls">
+          <div class="trade-status waiting" id="tradeStatus">
+            거래 상대를 기다리는 중...
+          </div>
+          <div class="trade-actions">
+            <button class="accept-btn" onclick="executeTrade()" id="executeBtn" disabled>
+              거래 실행
+            </button>
+            <button class="decline-btn" onclick="cancelTrade()">
+              거래 취소
+            </button>
+          </div>
+        </div>
+        
+        <!-- 상대방 쪽 -->
+        <div class="trade-side">
+          <h3 id="otherUserName">상대방</h3>
+          <div style="margin-bottom: 15px;">상대방 인벤토리:</div>
+          <div class="trade-items" id="otherInventory">
+            로딩 중...
+          </div>
+          <div style="margin-bottom: 10px;">상대방 제안:</div>
+          <div class="trade-offer" id="otherOffer"></div>
+          <div id="otherReadyStatus" style="text-align: center; margin-top: 10px; padding: 10px; border-radius: 6px; background: #f8f9fa;">
+            준비 대기 중
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // 거래 데이터 감지 시작
+  watchTrade(tradeId);
+  watchOtherInventory(otherUserId);
+
+  // 내/상대 제안 실시간 감지
+  db.ref(`trades/${tradeId}/participants/${currentUser.uid}/offer`)
+    .on("value", snapshot => renderMyOffer(snapshot.val() || {}));
+
+  db.ref(`trades/${tradeId}/participants/${otherUserId}/offer`)
+    .on("value", snapshot => renderOtherOffer(snapshot.val() || {}));
+}
+
+
+// 상대방 인벤토리 로드 함수 추가
+function loadOtherUserInventory(otherUserId) {
+  db.ref(`users/${otherUserId}/inventory`).once('value', (snapshot) => {
+    const otherInventory = snapshot.val() || [];
+    const otherInventoryContainer = document.getElementById('otherInventory');
+    
+    if (otherInventoryContainer) {
+      otherInventoryContainer.innerHTML = getTradeInventoryHTML(otherInventory, true);
+    }
+  });
+}
+
+// 거래 인벤토리 HTML 생성 (읽기 전용 옵션 추가)
+function getTradeInventoryHTML(items, readOnly = false) {
+  if (!items || items.length === 0) {
+    return '<div style="grid-column: 1/-1; text-align: center; color: #666;">인벤토리가 비어있습니다</div>';
+  }
+  
+  return items.map(item => {
+    const rarityName = rarityInfo[item.rarity].name;
+    const specialName = specialInfo[item.special].name;
+    const displayName = specialName ? `${specialName} ${rarityName}` : rarityName;
+    
+    const clickHandler = readOnly ? '' : `onclick="selectTradeItem(${item.id})"`;
+    const dataAttribute = readOnly ? '' : `data-item-id="${item.id}"`;
+    
+    return `
+      <div class="trade-item ${rarityInfo[item.rarity].class}" 
+           ${clickHandler} 
+           ${dataAttribute}
+           style="${readOnly ? 'cursor: default;' : ''}">
+        <div style="font-weight: 600; font-size: 0.7rem;">${displayName}</div>
+        <div style="font-size: 0.8rem;">${item.name}</div>
+        <div style="font-size: 0.7rem; color: #666;">${formatNumber(item.basePrice)}원</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 거래 데이터 감지 (개선된 버전)
+function watchTrade(tradeId) {
+  // 기존 감지 중단
+  if (currentTrade && currentTrade.watcher) {
+    currentTrade.watcher.off();
+  }
+  
+  const tradeRef = db.ref(`trades/${tradeId}`);
+  
+  // currentTrade 객체가 존재하는지 확인하고 초기화
+  if (!currentTrade) {
+    currentTrade = {};
+  }
+  
+  currentTrade.watcher = tradeRef;
+  currentTrade.prevTradeId = tradeId;
+  
+  tradeRef.on('value', (snapshot) => {
+    const tradeData = snapshot.val();
+    if (!tradeData) {
+      // 거래가 취소됨
+      alert('거래가 취소되었습니다.');
+      closeTradeInterface();
+      return;
+    }
+    
+    updateTradeInterface(tradeData);
+  });
+}
+
+// 거래 인터페이스 업데이트 (개선된 버전)
+function updateTradeInterface(tradeData) {
+  if (!currentTrade) return;
+  
+  const participants = tradeData.participants;
+  const otherUserId = currentTrade.otherUser;
+  const otherUser = participants[otherUserId];
+  const myData = participants[currentUser.uid];
+  
+  if (!otherUser || !myData) return;
+  
+  // 상대방 정보 업데이트
+  const otherUserNameElement = document.getElementById('otherUserName');
+  if (otherUserNameElement) {
+    otherUserNameElement.textContent = otherUser.name;
+  }
+  
+  // 상대방 제안 업데이트
+  const otherOffer = document.getElementById('otherOffer');
+  if (otherOffer) {
+    otherOffer.innerHTML = '';
+    
+    if (otherUser.offer) {
+      Object.values(otherUser.offer).forEach(item => {
+        const rarityName = rarityInfo[item.rarity].name;
+        const specialName = specialInfo[item.special].name;
+        const displayName = specialName ? `${specialName} ${rarityName}` : rarityName;
+        
+        const offerElement = document.createElement('div');
+        offerElement.className = `trade-item ${rarityInfo[item.rarity].class}`;
+        offerElement.style.cssText = 'flex: 0 0 auto; width: 80px; height: 80px; font-size: 0.7rem;';
+        offerElement.innerHTML = `
+          <div style="font-weight: 600;">${displayName}</div>
+          <div>${item.name}</div>
+        `;
+        
+        otherOffer.appendChild(offerElement);
+      });
+    }
+  }
+  
+  // 상대방 준비 상태 업데이트
+  const otherReadyStatus = document.getElementById('otherReadyStatus');
+  if (otherReadyStatus) {
+    if (otherUser.ready) {
+      otherReadyStatus.textContent = '준비 완료!';
+      otherReadyStatus.style.background = '#d4edda';
+      otherReadyStatus.style.color = '#155724';
+    } else {
+      otherReadyStatus.textContent = '준비 대기 중';
+      otherReadyStatus.style.background = '#f8f9fa';
+      otherReadyStatus.style.color = '#666';
+    }
+  }
+  
+  // 내 준비 상태 동기화 (다른 창에서 변경된 경우)
+  const myReadyBtn = document.getElementById('myReadyBtn');
+  if (myReadyBtn && myData.ready !== undefined) {
+    if (myData.ready) {
+      myReadyBtn.textContent = '준비 취소';
+      myReadyBtn.style.background = '#28a745';
+    } else {
+      myReadyBtn.textContent = '준비 완료';
+      myReadyBtn.style.background = '#4364F7';
+    }
+  }
+  
+  // 거래 실행 버튼 상태 업데이트
+  const executeBtn = document.getElementById('executeBtn');
+  const tradeStatus = document.getElementById('tradeStatus');
+  
+  if (executeBtn && tradeStatus) {
+    const myReady = myData.ready;
+    const bothReady = myReady && otherUser.ready;
+    
+    executeBtn.disabled = !bothReady;
+    
+    if (bothReady) {
+      tradeStatus.className = 'trade-status ready';
+      tradeStatus.textContent = '거래 준비 완료! 거래를 실행하세요.';
+    } else {
+      tradeStatus.className = 'trade-status waiting';
+      if (!myReady && !otherUser.ready) {
+        tradeStatus.textContent = '양쪽 모두 준비가 필요합니다.';
+      } else if (!myReady) {
+        tradeStatus.textContent = '당신의 준비가 필요합니다.';
+      } else {
+        tradeStatus.textContent = '상대방을 기다리는 중...';
+      }
+    }
+  }
+}
+
+// 거래 실행 (개선된 버전)
+function executeTrade() {
+  if (!currentTrade) return;
+  
+  // 거래 실행 중 중복 방지
+
+  
+  db.ref(`trades/${currentTrade.id}`).once('value', (snapshot) => {
+    const tradeData = snapshot.val();
+    if (!tradeData) {
+      alert('거래 데이터를 찾을 수 없습니다.');
+      closeTradeInterface();
+      return;
+    }
+    
+    const participants = tradeData.participants;
+    const myOffer = participants[currentUser.uid].offer || {};
+    const otherOffer = participants[currentTrade.otherUser].offer || {};
+    
+    // 양쪽 모두 준비 상태인지 다시 확인
+
+    
+    // 거래 실행
+    // 내가 주는 아이템들 제거
+    Object.keys(myOffer).forEach(itemId => {
+      const index = inventory.findIndex(item => item.id == itemId);
+      if (index !== -1) {
+        inventory.splice(index, 1);
+      }
+    });
+    
+    // 상대방이 주는 아이템들 받기
+    Object.values(otherOffer).forEach(item => {
+      inventory.push({
+        ...item,
+        id: Date.now() + Math.random() // 새로운 ID 생성
+      });
+    });
+    
+    // 데이터 저장
+    saveUserData();
+    renderInventory();
+
+    // 거래 세션 삭제
+    db.ref(`trades/${currentTrade.id}`).remove();
+    alert('거래 완료!')
+    
+    // UI 업데이트
+    renderInventory();
+    
+    alert('거래가 완료되었습니다!');
+    closeTradeInterface();
+  });
+}
+
+// 거래 인터페이스 닫기 (개선된 버전)
+function closeTradeInterface() {
+  // 감지 중단
+  if (currentTrade && currentTrade.watcher) {
+    currentTrade.watcher.off();
+  }
+  
+  currentTrade = null;
+  document.querySelector('.trade-overlay')?.remove();
+}
 
 // 뽑기 가능한 주식 목록
 const availableStocks = [
@@ -614,12 +1619,6 @@ const specialInfo = {
   tiny: { name: "조그마한", probability: 3, class: "special-tiny" },
   alwaysUp: { name: "특별한", probability: 3, class: "special-always-up" }
 };
-
-let capital = 100000;
-let inventory = [];
-let activeStocks = [];
-let freeTickets = 1; // 시작시 1개 지급
-let ticketTimerSeconds = 60; // 1분 뽑기권 타이머
 
 const MAX_INVENTORY_SIZE = 9;
 
@@ -692,6 +1691,15 @@ function determineSpecial() {
   return 'none';
 }
 
+// UI 업데이트
+function updateUI() {
+  updateCapital();
+  updateFreeTickets();
+  renderInventory();
+  renderActiveStocks();
+  updateButtons();
+}
+
 // 뽑기권 업데이트
 function updateFreeTickets() {
   freeTicketsElem.textContent = freeTickets;
@@ -751,6 +1759,7 @@ function doGacha() {
   updateFreeTickets();
   renderInventory();
   updateButtons();
+  saveUserData(); // 데이터 저장
 }
 
 // 뽑기 결과 표시
@@ -819,6 +1828,7 @@ function useStock(stockId) {
   renderInventory();
   renderActiveStocks();
   updateButtons();
+  saveUserData(); // 데이터 저장
 }
 
 // 활성 주식 업데이트
@@ -863,6 +1873,7 @@ function updateActiveStocks() {
           activeStocks.splice(currentIndex, 1);
           renderActiveStocks();
           updateCapital();
+          saveUserData(); // 데이터 저장
           
           const rarityName = rarityInfo[stock.rarity].name;
           const specialName = specialInfo[stock.special].name;
@@ -878,10 +1889,59 @@ function updateActiveStocks() {
   for (let key in eventEffect) {
     eventEffect[key] = 0;
   }
+  
+  // 데이터 저장
+  if (activeStocks.length > 0) {
+    saveUserData();
+  }
+}
+
+function renderMyOffer(offerData) {
+  const myOffer = document.getElementById('myOffer');
+  if (!myOffer) return;
+  myOffer.innerHTML = '';
+
+  Object.values(offerData).forEach(item => {
+    const rarityName = rarityInfo[item.rarity].name;
+    const specialName = specialInfo[item.special].name;
+    const displayName = specialName ? `${specialName} ${rarityName}` : rarityName;
+
+    const offerElement = document.createElement('div');
+    offerElement.className = `trade-item ${rarityInfo[item.rarity].class}`;
+    offerElement.style.cssText = 'flex: 0 0 auto; width: 80px; height: 80px; font-size: 0.7rem;';
+    offerElement.innerHTML = `
+      <div style="font-weight: 600;">${displayName}</div>
+      <div>${item.name}</div>
+    `;
+    myOffer.appendChild(offerElement);
+  });
+}
+
+function renderOtherOffer(offerData) {
+  const otherOffer = document.getElementById('otherOffer');
+  if (!otherOffer) return;
+  otherOffer.innerHTML = '';
+
+  Object.values(offerData).forEach(item => {
+    const rarityName = rarityInfo[item.rarity].name;
+    const specialName = specialInfo[item.special].name;
+    const displayName = specialName ? `${specialName} ${rarityName}` : rarityName;
+
+    const offerElement = document.createElement('div');
+    offerElement.className = `trade-item ${rarityInfo[item.rarity].class}`;
+    offerElement.style.cssText = 'flex: 0 0 auto; width: 80px; height: 80px; font-size: 0.7rem;';
+    offerElement.innerHTML = `
+      <div style="font-weight: 600;">${displayName}</div>
+      <div>${item.name}</div>
+    `;
+    otherOffer.appendChild(offerElement);
+  });
 }
 
 // 인벤토리 렌더링
 function renderInventory() {
+  if (!inventoryCountElem || !inventoryContainer) return;
+  
   inventoryCountElem.textContent = inventory.length;
   
   if (inventory.length === 0) {
@@ -931,6 +1991,8 @@ function renderInventory() {
 
 // 활성 주식 렌더링
 function renderActiveStocks() {
+  if (!activeStockTableBody || !activeStocksTable || !noActiveStocks) return;
+  
   if (activeStocks.length === 0) {
     activeStocksTable.style.display = 'none';
     noActiveStocks.style.display = 'block';
@@ -976,11 +2038,15 @@ function renderActiveStocks() {
 }
 
 function updateCapital() {
-  capitalElem.textContent = formatNumber(capital);
+  if (capitalElem) {
+    capitalElem.textContent = formatNumber(capital);
+  }
 }
 
 function updateButtons() {
-  gachaBtn.disabled = freeTickets <= 0 || inventory.length >= MAX_INVENTORY_SIZE;
+  if (gachaBtn) {
+    gachaBtn.disabled = freeTickets <= 0 || inventory.length >= MAX_INVENTORY_SIZE;
+  }
 }
 
 // 이벤트 관련
@@ -1002,10 +2068,73 @@ function triggerEvent() {
   const impactPercent = 20;
   if (up) {
     eventEffect[event.category] = impactPercent;
-    eventBox.textContent = event.textUp;
+    if (eventBox) eventBox.textContent = event.textUp;
   } else {
     eventEffect[event.category] = -impactPercent;
-    eventBox.textContent = event.textDown;
+    if (eventBox) eventBox.textContent = event.textDown;
+  }
+}
+
+// 게임 초기화
+function initializeGame() {
+  // 이벤트 리스너
+  if (gachaBtn) {
+    gachaBtn.addEventListener('click', doGacha);
+  }
+
+  // 이벤트 3분마다 실행 (3번째 변동에서도)
+  let updateCount = 0;
+  const gameInterval = setInterval(() => {
+    if (!currentUser) {
+      clearInterval(gameInterval);
+      return;
+    }
+    
+    updateCount++;
+    updateActiveStocks();
+    renderActiveStocks();
+    updateCapital();
+    secondsLeft = 10;
+    
+    // 3번째 변동에서도 이벤트 발생
+    if (updateCount % 3 === 0) {
+      triggerEvent();
+    }
+  }, 10000);
+
+  // 1초마다 타이머 업데이트
+  const timerInterval = setInterval(() => {
+    if (!currentUser) {
+      clearInterval(timerInterval);
+      return;
+    }
+    
+    updateTimer();
+    updateTicketTimer();
+  }, 1000);
+
+  // 초기 렌더링
+  updateUI();
+  renderRankingFromFirebase();
+
+  // 랭킹 토글 기능
+  const rankingContainer = document.getElementById("rankingContainer");
+  const toggleBtn = document.getElementById("toggleRankingBtn");
+  const outerHr = document.querySelector('body > hr');
+  
+  if (rankingContainer && toggleBtn) {
+    if (outerHr) outerHr.style.display = "none";
+    rankingContainer.style.display = "none";
+    if (outerHr) outerHr.style.display = "none";
+    toggleBtn.textContent = "🏆 랭킹 보이기";
+
+    toggleBtn.addEventListener("click", () => {
+      const isHidden = rankingContainer.style.display === "none";
+
+      rankingContainer.style.display = isHidden ? "block" : "none";
+      if (outerHr) outerHr.style.display = isHidden ? "block" : "none";
+      toggleBtn.textContent = isHidden ? "🏆 랭킹 숨기기" : "🏆 랭킹 보이기";
+    });
   }
 }
 
@@ -1019,53 +2148,31 @@ function updateTimer() {
     renderActiveStocks();
     updateCapital();
   }
-  timerSecondsElem.textContent = secondsLeft;
+  if (timerSecondsElem) {
+    timerSecondsElem.textContent = secondsLeft;
+  }
 }
 
 // 뽑기권 타이머
 function updateTicketTimer() {
   ticketTimerSeconds--;
   if (ticketTimerSeconds <= 0) {
-    ticketTimerSeconds = 20;
+    ticketTimerSeconds = 19;
     freeTickets++;
-    showFreeTicketNotification();
-    updateFreeTickets();
-    updateButtons();
   }
-  ticketTimerElem.textContent = ticketTimerSeconds;
-}
 
-// 이벤트 리스너
-gachaBtn.addEventListener('click', doGacha);
-
-// 이벤트 3분마다 실행 (3번째 변동에서도)
-let updateCount = 0;
-setInterval(() => {
-  updateCount++;
-  updateActiveStocks();
-  renderActiveStocks();
-  updateCapital();
-  secondsLeft = 10;
+      if (freeTickets < 7) {
+      freeTickets++;
+      showFreeTicketNotification();
+      updateFreeTickets();
+      updateButtons();
+      saveUserData(); // 데이터 저장
+    }
   
-  // 3번째 변동에서도 이벤트 발생
-  if (updateCount % 3 === 0) {
-    triggerEvent();
+  if (ticketTimerElem) {
+    ticketTimerElem.textContent = ticketTimerSeconds;
   }
-}, 10000);
-
-// 1초마다 타이머 업데이트
-setInterval(() => {
-  updateTimer();
-  updateTicketTimer();
-}, 1000);
-
-// 초기 렌더링
-renderInventory();
-renderActiveStocks();
-updateCapital();
-updateFreeTickets();
-updateButtons();
-renderRankingFromFirebase(); // ← 이 줄 추가
+}
 
 // 랭킹 관련 함수들
 function getTopInvestmentCategory() {
@@ -1091,12 +2198,15 @@ function getTopInvestmentCategory() {
   return topCategory;
 }
 
-function saveToFirebaseRanking(username) {
+function saveToFirebaseRanking() {
+  if (!currentUser) return;
+  
   const topCategory = getTopInvestmentCategory();
-  db.ref("rankings/" + username).set({
-    name: username,
+  db.ref("rankings/" + currentUser.displayName.replace(/\./g, '_')).set({
+    name: currentUser.displayName,
     capital: capital,
-    category: topCategory
+    category: topCategory,
+    uid: currentUser.uid
   }, (error) => {
     if (error) {
       alert("등록 실패: " + error);
@@ -1116,58 +2226,28 @@ function renderRankingFromFirebase() {
     data.sort((a, b) => b.capital - a.capital);
 
     const rankDiv = document.getElementById("ranking");
-    rankDiv.innerHTML = `
-      <h3 style="margin-bottom: 12px; color:#222;">🏆 랭킹 TOP 10</h3>
-      <ul style="list-style: none; padding: 0; margin: 0;">
-        ${data.map((r, i) => `
-          <li style="background: #f5f7ff; border-left: 4px solid #4364F7; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; color: #333; font-weight: 500;">
-            <strong style="margin-right: 10px;">${i + 1}위</strong> ${r.name} — 💰 ${formatNumber(r.capital)} 원
-            <div style="font-size: 0.9rem; color:#666;">📊 최대 투자 분야: <strong>${r.category || "없음"}</strong></div>
-          </li>
-        `).join("")}
-      </ul>
-    `;
-  });
-}
-
-function saveRanking() {
-  const name = document.getElementById("username").value.trim();
-  if (name === "") return alert("이름을 입력하세요!");
-
-  if (name === "pleaseresetあ") {
-    db.ref("rankings").remove();
-    alert("랭킹이 초기화되었습니다.");
-    return;
-  }
-
-  db.ref("rankings/" + name).once("value").then(snapshot => {
-    if (snapshot.exists()) {
-      alert("이미 등록된 이름입니다!");
-    } else {
-      saveToFirebaseRanking(name);
+    if (rankDiv) {
+      rankDiv.innerHTML = `
+        <h3 style="margin-bottom: 12px; color:#222;">🏆 랭킹 TOP 10</h3>
+        <div style="margin-bottom: 15px;">
+          <button onclick="saveToFirebaseRanking()" 
+                  style="padding:8px 16px; font-size:1rem; background: #4364F7; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            🏅 내 점수 등록하기
+          </button>
+        </div>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          ${data.map((r, i) => `
+            <li style="background: #f5f7ff; border-left: 4px solid #4364F7; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; color: #333; font-weight: 500;">
+              <strong style="margin-right: 10px;">${i + 1}위</strong> ${r.name} — 💰 ${formatNumber(r.capital)} 원
+              <div style="font-size: 0.9rem; color:#666;">📊 최대 투자 분야: <strong>${r.category || "없음"}</strong></div>
+            </li>
+          `).join("")}
+        </ul>
+      `;
     }
   });
 }
 
-const rankingContainer = document.getElementById("rankingContainer");
-const toggleBtn = document.getElementById("toggleRankingBtn");
-
-const outerHr = document.querySelector('body > hr');
-if (outerHr) outerHr.style.display = "none";
-
-rankingContainer.style.display = "none";
-if (outerHr) outerHr.style.display = "none";
-toggleBtn.textContent = "🏆 랭킹 보이기";
-
-toggleBtn.addEventListener("click", () => {
-  const isHidden = rankingContainer.style.display === "none";
-
-  rankingContainer.style.display = isHidden ? "block" : "none";
-  if (outerHr) outerHr.style.display = isHidden ? "block" : "none";
-  toggleBtn.textContent = isHidden ? "🏆 랭킹 숨기기" : "🏆 랭킹 보이기";
-});
-
   </script>
 </body>
-
 </html>
